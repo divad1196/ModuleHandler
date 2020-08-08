@@ -1,8 +1,8 @@
 import setuptools
 
 setuptools.setup(
-    name='modulehandler',
-    version='0.1',
+    name="modulehandler",
+    version="0.2",
     author="Gallay David",
     author_email="davidtennis96@hotmail.com",
     description="A dynamic module handler, with standalone tools",
@@ -11,6 +11,14 @@ setuptools.setup(
     long_description_markdown_filename='README.md',
     url="https://github.com/divad1196/ModuleHandler",
     packages=setuptools.find_packages(),
+    install_requires=[
+        "markdown",
+        "json",
+        "pathlib",
+        "pydantic",
+        "importlib",
+        "typing",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

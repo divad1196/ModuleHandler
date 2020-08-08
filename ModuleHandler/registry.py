@@ -1,11 +1,10 @@
-from importlib import reload
+import os
 from pathlib import Path
 from typing import List, Union, Optional
-from ..defaults import CALL_PATH
 from .tools import absolute_path_import, get_module_readme_description, get_module_config
 
 PathType = Union[Path, str]
-DEFAULT_BASE_PATH = CALL_PATH
+DEFAULT_BASE_PATH = Path(os.getcwd())
 
 
 class ModuleRegistry:
@@ -46,13 +45,17 @@ class ModuleRegistry:
             "config": config,
         }
         return name
-    
+
     def _find_module(self, name: str):
         for d in self._search_dir:
             for module in d.iterdir():
                 if module.name == name:
                     return module.resolve()
         return None
+
+    def reload_all(self):
+        for module in self._registry.keys():
+            self.load(module)
 
     def imports(self, module: str):
         m = self.get(module)
@@ -78,15 +81,21 @@ class ModuleRegistry:
     def _load(self, path: Path):
         return absolute_path_import(path)
 
-    def load(self, name: str):
-        path = self._modules[name]["path"]
-        print("Loading module {name} at '{path}'".format(
-            name=name,
-            path=path,
-        ))
-        module = self._load(path)
-        self._registry[name] = module
-        return module
+    def load(self, name: str, noreload=False):
+        if not noreload or name not in self._registry:
+            path = self._modules[name]["path"]
+            print("Loading module {name} at '{path}'".format(
+                name=name,
+                path=path,
+            ))
+            module = self._load(path)
+            self._registry[name] = module
+            return module
+        return self._registry[name]
+
+    def load_all(self, noreload=False):
+        for m in self._modules:
+            self.load(m, noreload)
 
     def load_modules(self, modules: List[str]):
         for m in modules:

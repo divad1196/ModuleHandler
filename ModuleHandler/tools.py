@@ -3,6 +3,7 @@ import types
 from pathlib import Path
 from markdown import markdown
 from .module_config import ModuleConfigSchema
+import json
 
 
 DEFAULT_MODULE_CONFIG_FILENAME = "manifest.json"
