@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="modulehandler",
-    version="0.2",
+    version="0.5",
     author="Gallay David",
     author_email="davidtennis96@hotmail.com",
     description="A dynamic module handler, with standalone tools",
@@ -13,10 +13,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "markdown",
-        "json",
-        "pathlib",
         "pydantic",
-        "importlib",
         "typing",
     ],
     classifiers=[
