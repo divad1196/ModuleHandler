@@ -25,19 +25,24 @@ folder
 ```
 import setuptools
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
 setuptools.setup(
-    name='rundb',  
-    version='0.1',
+    name="modulehandler",
+    version="0.2",
     author="Gallay David",
     author_email="davidtennis96@hotmail.com",
-    description="A pseudo NoSQL database",
-    long_description=long_description,
+    description="A dynamic module handler, with standalone tools",
+    setup_requires=['setuptools-markdown'],
     long_description_content_type="text/markdown",
-    url="https://github.com/divad1196/RunDB",
+    long_description_markdown_filename='README.md',
+    url="https://github.com/divad1196/ModuleHandler",
     packages=setuptools.find_packages(),
+    install_requires=[
+        "markdown",
+        "pathlib",
+        "pydantic",
+        "importlib",
+        "typing",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -69,6 +74,16 @@ This will create 3 folders
 * build: package informations
 * dist: contain .whl builds (Wheel format), those are installable using `pip install some_package.whl`
 * project.egg.info: egg package (bytecode, dependency links, ...)
+
+
+
+### Test install
+
+```bash
+pip3 install dist/*.whl
+```
+
+
 
 ## Upload on pip
 

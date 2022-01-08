@@ -1,135 +1,76 @@
 import os
 from pathlib import Path
-from typing import List, Union, Optional
-from .tools import absolute_path_import, get_module_readme_description, get_module_config
+from typing import List, Union
+from .module import Module
 
 PathType = Union[Path, str]
-DEFAULT_BASE_PATH = Path(os.getcwd())
 
 
 class ModuleRegistry:
-    def __init__(self, base_path: PathType = DEFAULT_BASE_PATH):
+    def __init__(
+        self,
+        base_path: PathType = None,
+        modules=[],
+        search_dirs=[],
+        module_class: type = Module,
+    ):
+        self.module_class = module_class
+        if base_path is None:
+            base_path = Path()
         self._base_path = Path(base_path).resolve()
-        self._registry = {}
         self._modules = {}
-        self._search_dir = []
+        self._search_dir = set()
 
-    def _get_path(self, path, base_path: Optional[PathType] = None):
-        if base_path is None:
-            base_path = self._base_path
-        return Path(base_path).joinpath(path).resolve()
+        self.register_search_dirs(search_dirs, auto_register_modules=True)
+        self.register_modules(modules)
 
-    def _get_module_description(self, path: Path):
-        return get_module_readme_description(path)
+    def path(self, path):
+        return self._base_path.joinpath(path).resolve()
 
-    def _get_module_config(self, path: Path):
-        return get_module_config(path)
+    def register_search_dirs(self, dirs, auto_register_modules=True):
+        if not isinstance(dirs, (list, tuple)):
+            dirs = [dirs]
+        for d in dirs:
+            path = self.path(d)
+            self._search_dir.add(path)
+            self.register_modules(
+                [module.resolve() for module in path.iterdir()]
+            )
 
-    def register_search_dir(self, dir: PathType, base_path: Optional[PathType] = None):
-        path = self._get_path(dir, base_path)
-        if path not in self._search_dir:
-            self._search_dir.append(path)
-        for module in path.iterdir():
-            self.register_module(module.resolve())
-
-    def register_module(self, module: PathType, base_path: Optional[PathType] = None):
-        if base_path is None:
-            base_path = self._base_path
-        module_path = Path(base_path).joinpath(module).resolve()
-        name = module_path.stem
-        description = self._get_module_description(module_path)
-        config = self._get_module_config(module_path)
-        self._modules[name] = {
-            "path": module_path,
-            "description": description,
-            "config": config,
-        }
-        return name
-
-    def _find_module(self, name: str):
-        for d in self._search_dir:
-            for module in d.iterdir():
-                if module.name == name:
-                    return module.resolve()
-        return None
+    def register_modules(self, modules=[]):
+        if not isinstance(modules, (list, tuple)):
+            modules = [modules]
+        for m in modules:
+            module_path = self.path(m)
+            # TODO: Check override?
+            module = self.module_class(module_path, registry=self)
+            self._modules[module.name] = module
 
     def reload_all(self):
-        for module in self._registry.keys():
-            self.load(module)
+        for module in self.values():
+            module.load()
 
-    def imports(self, module: str):
-        m = self.get(module)
-        if m is not None:
-            return m
-        path = self._find_module(m)
-        return self.import_module(path)
+    def inject_all(self):
+        for module in self.values():
+            module.inject()
 
-    def import_all(self):
-        for module in self._modules:
-            self.import_module(module)
-
-    def import_module(self, path: Path, base_path: Optional[PathType] = None):
-        path = self._get_path(path, base_path)
-        name = self.register_module(path)
-        module = self.load(name)
-        return module
-
-    def import_modules(self, paths: List[PathType], base_path: Optional[PathType] = None):
-        for p in paths:
-            self.import_module(p, base_path)
-
-    def _load(self, path: Path):
-        return absolute_path_import(path)
-
-    def load(self, name: str, noreload=False):
-        if not noreload or name not in self._registry:
-            path = self._modules[name]["path"]
-            print("Loading module {name} at '{path}'".format(
-                name=name,
-                path=path,
-            ))
-            module = self._load(path)
-            self._registry[name] = module
-            return module
-        return self._registry[name]
-
-    def load_all(self, noreload=False):
-        for m in self._modules:
-            self.load(m, noreload)
-
-    def load_modules(self, modules: List[str]):
-        for m in modules:
-            self.load(m)
-
-    def module_objects(self):
-        return [m["module"] for m in self._registry.values()]
-
-    def path(self, module):
-        """
-            Get registered module's absolute path
-        """
-        return self._registry[module]["path"]
-
-    def description(self, module: str):
-        """
-            Get registered module's description
-        """
-        return self._modules[module]["description"]
+    def init(self):
+        self.reload_all()
 
     def get(self, module: str, default=None):
-        return self._registry.get(module, default)
+        return self._modules.get(module, default)
 
     def __getitem__(self, module: str):
-        return self._registry[module]
+        return self._modules[module]
 
     def __iter__(self):
-        return iter(self._registry)
+        return iter(self._modules)
 
     def items(self):
-        return self._registry.items()
+        return self._modules.items()
 
     def keys(self):
-        return self._registry.keys()
+        return self._modules.keys()
 
     def values(self):
-        return self._registry.values()
+        return self._modules.values()

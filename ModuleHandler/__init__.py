@@ -1,2 +1,3 @@
 from .registry import ModuleRegistry
-from .tools import absolute_path_import, get_module_readme_description, get_module_config
+from .class_handler import ClassRegistry
+from .tools import absolute_path_import, make_global_module
