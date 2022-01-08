@@ -18,8 +18,6 @@ class AbstractModule:
 
     @property
     def name(self, reload=True):
-        if reload or not self._module:
-            self._module = absolute_path_import(self.path)
         return self._name
 
     @property
@@ -34,17 +32,27 @@ class AbstractModule:
     def config(self):
         return self._config
 
+    @property
+    def loaded(self):
+        return bool(self._module)
+
     def load(self, reload=True, **kw):
         """
             Load the module has python
         """
-        if reload or not self._module:
-            self._module = absolute_path_import(self.path)
+        if reload or not self.loaded:
+            self._module = absolute_path_import(self.path, self.name)
         return self._module
 
     def inject(self, reload=True):
         module = self.load(reload=reload)
         sys.modules[self.name] = module
+
+    def __repr__(self) -> str:
+        return "\"{name}\" at {path}".format(
+            name=self.name,
+            path=self.path,
+        )
 
 
 class Module(AbstractModule):

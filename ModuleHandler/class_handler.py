@@ -1,12 +1,14 @@
 
 
 class ClassRegistry:
-    def __init__(self):
+    def __init__(self, post_build_hooks=[], base_classes=tuple()):
         self._load_registry = {}  # Juste store classes in register order
         self._registry = {}       # Final classes after merge
+        self._post_build_hooks = post_build_hooks
+        self._base_classes = base_classes
 
     def _get_base_metaclass(self, name, *args, **kwargs) -> type:
-        class Base(self._base):
+        class Base(*self._base_classes):
             __abstract__ = True
 
         return Base
@@ -17,14 +19,26 @@ class ClassRegistry:
                 base_class = self._get_base_metaclass(name, *args, **kwargs)
                 self._load_registry[name] = [base_class]
             self._load_registry[name].append(cls)
+            return cls
         return _register
+
+    def _post_build(self, cls):
+        """
+            Meant to be overloaded.
+            Apply hooks on the constructed class
+        """
+        for hook in self._post_build_hooks:
+            cls = hook(cls)
+        return cls
+
     
     def _build(self, name, classes):
-        return type(
+        cls = type(
             name,
             tuple(reversed(classes)),
             {}
         )
+        return self._post_build(cls)
 
     def _make(self, name, classes):
         cls = self._build(name, classes)

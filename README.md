@@ -1,5 +1,10 @@
 # ModuleHandler
 
+If you want to create a plugable program, this library is made for you.
+
+The goal of this library is to make easy the loading of selected modules among many availables from anywhere in the filesystem.
+Of courses, you will need your modules to communicate, for exemple inherit a class from another module: There is tools for that too.
+
 
 
 ## Installation
@@ -12,63 +17,56 @@ pip3 install modulehandler
 
 ## Usage
 
-Considering this folder tree
 
-```bash
-tests_import_handler
-├── addons
-│   └── m1
-│       ├── __init__.py
-│       ├── manifest.json
-│       └── README.md
-├── m2
-│   ├── __init__.py
-│   └── manifest.json
-└── m3.py
-```
 
 ```python
-import ModuleHandler
-from pathlib import Path
-registry = ModuleHandler.ModuleRegistry()
+modules = ModuleHandler.ModuleRegistry(search_dirs=["dir_with_modules"])
 
-tests_import_handler = Path("tests_import_handler").resolve()
-addons = tests_import_handler.joinpath("addons")
-m2 = tests_import_handler.joinpath("m2")
-m3 = tests_import_handler.joinpath("m3.py")
+my_test = modules.make_global("my_test") # Utility that creates a dynamic module named "my_test" with an object modules inside.
+# See usage in modules below
 
-# Register won't load
-registry.register_search_dir(addons)
-registry.register_module(m2)
-registry.register_module(m3)
-
-# load modules individually
-m3 = registry.load("m3")  # ignore if already loader with noreload=True
-
-# load all modules
-registry.load_all()  # ignore if already loader with noreload=True
-
-# access loaded module
-m1 = registry["m1"]
-m4 = registry.get("m4")  # return None
-
-# register + load
-m2 = registry.import_module(m2)
-
-# import from search paths if not already loaded
-m1 = registry.imports("m1")
-
-# get readme as html
-registry.description("m1")
-
-# get module absolute path
-registry.path("m1")
+# Load as many as you want
+modules.load([  # Here, the codes of our modules will be executed
+    "module1",
+    "module2",
+    "module3",
+])
 ```
 
-Nb:
 
-* This won't change sys search paths nor add modules to sys.modules: `"m1" in sys.modules  # False`
-* loading only replace module in registry but this won't propagate to copy of old module. 
+
+In one of your module, say module2, you will be able to refer to module1
+
+```python
+import my_test.modules import module1  # exists thanks to make_global_module
+```
+
+
+
+### ClasseRegistry
+
+```
+classes = ModuleHandler.ClassRegistry(post_build_hooks=[print_mro], base_classes=(BaseClass,))
+modules = ModuleHandler.ModuleRegistry(search_dirs=["tests_import_handler"])
+
+my_test = ModuleHandler.make_global_module("my_test")
+print(list(sys.modules.keys()))
+my_test.classes = classes
+my_test.modules = modules
+
+print(list(modules.keys()))
+
+modules.init()
+
+# Load as many as you want
+m3 = modules["m3"].load()
+
+
+classes.init()
+
+A = classes["A"]
+a = A()
+```
 
 
 

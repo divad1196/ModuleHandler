@@ -80,6 +80,8 @@ This will create 3 folders
 ### Test install
 
 ```bash
+python3 setup.py install --user
+# or
 pip3 install dist/*.whl
 ```
 

@@ -1,6 +1,5 @@
 #!/bin/bash
-python3 setup.py sdist bdist_wheel
-pip3 install dist/*.whl --force-reinstall
+python3 setup.py install --user
 
 cd tests
 python3 tests.py
